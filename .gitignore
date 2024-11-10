@@ -1,0 +1,12 @@
+.env*
+.aws
+*~
+*.swp
+.coverage
+notes.txt
+
+myenv/
+logs/
+input/
+output/
+__pycache__/
