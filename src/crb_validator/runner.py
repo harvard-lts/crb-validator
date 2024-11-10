@@ -1,14 +1,14 @@
 import hashlib
-from crb_validator.utils.utils_ocfl import OcflUtils
 from crb_validator.utils.utils_rate import RateUtils
 import os
-import shutil
 import time
-from ocfl_rehydration.rehydrator import Rehydrator
 from crb_validator import configure_logger
 from ocfl_rehydration.drs_file import DrsFile
 from ocfl_rehydration.drs_descriptor import DrsDescriptor
 from ocfl_rehydration.ocfl_inventory import OcflInventory
+
+from crb_validator.validation_entry import ValidationEntry
+from crb_validator.validation_report import ValidationReport
 
 class Runner:
 
@@ -20,23 +20,30 @@ class Runner:
     def run(self, download_dir, hydrated_dir, verified_dir, report_dir):
         self.logger.info(f"Starting run with download_dir: {download_dir} "\
                          f"and hydrated_dir: {hydrated_dir}")
+
+        # Create a validation report
+        report = ValidationReport(report_dir)
         try:
             start_time = time.time()
-            report_csv = self._do_run(download_dir,
-                                      hydrated_dir,
-                                      verified_dir,
-                                      report_dir)
+            self._do_run(download_dir,
+                         hydrated_dir,
+                         verified_dir,
+                         report)
 
         finally:
             end_time = time.time()
-            self.logger.info(f"Report CSV: {report_csv}")
+            report.generate_csv()
+            self.logger.info(f"Report CSV: {report.file_path}")
             self.logger.debug(f"Summary of directory: {verified_dir}")
             # self.logger.info(self.rate_utils.get_summary(target_dir,
             #                                              start_time,
             #                                              end_time))
 
 
-    def _do_run(self, download_dir, hydrated_dir, verified_dir, report_dir):
+    def _do_run(self, download_dir, hydrated_dir, verified_dir, report):
+        # Create verified directory if it doesn't exist
+        os.makedirs(verified_dir, exist_ok=True)
+
         # Verify download and hydrated object names are the same
         download_obj_dirs = self._list_subdirectory_names(download_dir)
         hydrated_obj_dirs = self._list_subdirectory_names(hydrated_dir)
@@ -44,31 +51,15 @@ class Runner:
 
         # At this point, we know the download and hydrated dirs have the same objects
         for obj in hydrated_obj_dirs:
-            # Collect hydrated objects and files
-            hydrated_obj = {}
+            self.logger.info(f"Verifying object: {obj}")
+            result = self._verify_objs(download_dir, hydrated_dir, obj)
+            report.add_entry(result)
 
-            hydrated_obj_root = os.path.join(hydrated_dir, obj)
-            for file in self._list_files(hydrated_obj_root):
-                hydrated_file = self._get_hydrated_file(file)
-                hydrated_obj[os.path.basename(file)] = hydrated_file
-
-            # Collect download objects and files from descriptors
-            download_obj = {}
-
-            # For each download object, read descriptor
-            download_obj_root = os.path.join(download_dir, obj)
-            ocfl_inventory = self._get_ocfl_inventory(download_obj_root)
-            drs_descriptor = self._get_drs_descriptor(download_obj_root,
-                                                      ocfl_inventory)
-
-            for f in drs_descriptor.get_files().values():
-                download_obj[f.get_file_name()] = f
-
-            # Verify number and digests between download and hydrated objects
-            self._verify_objs(download_obj, hydrated_obj)
-
-        return "report.csv"
-
+            # Move the hydrated object to the verified directory, if successful
+            if result.status == "SUCCESS":
+                hydrated_obj = os.path.join(hydrated_dir, obj)
+                verified_obj = os.path.join(verified_dir, obj)
+                os.rename(hydrated_obj, verified_obj)
 
 
     def _list_subdirectory_names(self, directory):
@@ -97,7 +88,44 @@ class Runner:
                 self.logger.error(msg)
                 raise FileNotFoundError(msg)
             
-    def _verify_objs(self, download_files, hydrated_files):
+    def _verify_objs(self, download_dir, hydrated_dir, obj):
+        result = ValidationEntry(obj)
+
+        # Collect hydrated objects and files
+        hydrated_obj = {}
+
+        hydrated_obj_root = os.path.join(hydrated_dir, obj)
+        for file in self._list_files(hydrated_obj_root):
+            hydrated_file = self._get_hydrated_file(file)
+            hydrated_obj[os.path.basename(file)] = hydrated_file
+
+        # Collect download objects and files from descriptors
+        download_obj = {}
+
+        # For each download object, read descriptor
+        download_obj_root = os.path.join(download_dir, obj)
+        ocfl_inventory = self._get_ocfl_inventory(download_obj_root)
+        drs_descriptor = self._get_drs_descriptor(download_obj_root,
+                                                  ocfl_inventory)
+
+        for f in drs_descriptor.get_files().values():
+            download_obj[f.get_file_name()] = f
+
+        # Verify number and digests between download and hydrated objects
+        try:
+            self._do_verify_objs(download_obj, hydrated_obj)
+            result.set_status("SUCCESS")
+        except Exception as e:
+            result.set_status("FAILURE", str(e))
+            self.logger.error(f"Error verifying object {obj}: {e}")
+            # Stop processing this object if there is an error
+            return result
+
+        result.set_file_count(len(download_obj))
+        return result
+
+
+    def _do_verify_objs(self, download_files, hydrated_files):
         self._verify_sets(download_files, hydrated_files)
         
         # Verify download files have the same digest as hydrated files
