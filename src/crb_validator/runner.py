@@ -35,9 +35,9 @@ class Runner:
             report.generate_csv()
             self.logger.info(f"Report CSV: {report.file_path}")
             self.logger.debug(f"Summary of directory: {verified_dir}")
-            # self.logger.info(self.rate_utils.get_summary(target_dir,
-            #                                              start_time,
-            #                                              end_time))
+            self.logger.info(self.rate_utils.get_summary(verified_dir,
+                                                         start_time,
+                                                         end_time))
 
 
     def _do_run(self, download_dir, hydrated_dir, verified_dir, report):
