@@ -29,6 +29,12 @@ class Runner:
                          hydrated_dir,
                          verified_dir,
                          report)
+        except Exception as e:
+            msg = f"An error occurred during validation: {e}"
+            self.logger.error(msg)
+            entry = ValidationEntry("n/a")
+            entry.set_status("FAILURE", msg)
+            report.add_entry(entry)
 
         finally:
             end_time = time.time()
