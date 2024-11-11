@@ -7,7 +7,7 @@ import argparse
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=
                     'Verify OCFL objects that have already been downloaded '\
-                    'and rehydrated.'\
+                    'and rehydrated. '\
                     'Moves verified objects to provided directory and '\
                     'creates a CSV report in the provided directory.')
     ap.add_argument('-d', '--download_dir',
