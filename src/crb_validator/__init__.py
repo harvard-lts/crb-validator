@@ -12,7 +12,7 @@ timestamp = datetime.today().strftime('%Y-%m-%d')
 
 
 def configure_logger(name):
-    log_level = os.getenv("APP_LOG_LEVEL", "DEBUG")
+    log_level = os.getenv("APP_LOG_LEVEL", "INFO")
     log_dir = os.getenv("LOG_DIR", "logs/")
     # create log directory if it doesn't exist
     if not os.path.exists(log_dir):
