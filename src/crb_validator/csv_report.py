@@ -3,38 +3,40 @@ from datetime import datetime
 import os
 
 from crb_validator import configure_logger
-from crb_validator.validation_entry import ValidationEntry
 
 
-class ValidationReport:
-    def __init__(self, report_dir):
+class CSVReport:
+    def __init__(self, report_dir, base_name="validation_report"):
         self.logger = configure_logger(__name__)
-        self.file_path = self._create_report_filepath(report_dir)
+        self.file_path = self._create_report_filepath(report_dir, base_name)
         self.entries = []
 
 
     def add_entry(self, entry):
         self.entries.append(entry)
 
-    def generate_csv(self):
+    def set_entries(self, entries):
+        self.entries = entries
+
+    def generate_csv(self, fieldnames):
         with open(self.file_path, 'w') as f:
-            writer = csv.DictWriter(f, fieldnames=ValidationEntry.column_header())
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             for entry in self.entries:
-                f.write(f"{entry}\n")
+                writer.writerow(entry)
 
-    def _create_report_filepath(self, report_dir):
+    def _create_report_filepath(self, report_dir, base_name):
         # Create directory hierarchy if it doesn't exist
         os.makedirs(report_dir, exist_ok=True)
 
-        # Create filename of form: validation_report_YYYY-MM-DD.csv
+        # Create filename of form: <base_name>_YYYY-MM-DD.csv
         current_date = datetime.now().strftime("%Y-%m-%d")
-        csv_name = "validation_report_{}.csv".format(current_date)
+        csv_name = "{}_{}.csv".format(base_name, current_date)
         output_csv = os.path.join(report_dir, csv_name)
 
         index = 1
         while os.path.exists(output_csv):
-            csv_name = 'validation_report_{}_{}.csv'.format(current_date, index)
+            csv_name = '{}_{}_{}.csv'.format(base_name, current_date, index)
             output_csv = os.path.join(report_dir, csv_name)
             index += 1
 
