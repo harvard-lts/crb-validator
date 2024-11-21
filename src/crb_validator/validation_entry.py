@@ -26,6 +26,21 @@ class ValidationEntry:
     def set_file_count(self, count):
         self.file_count = count
 
+    def to_dict(self):
+        if self.message:
+            return {
+                'OSN': self.osn,
+                'FILE_COUNT': self.file_count,
+                'STATUS': self.status,
+                'MESSAGE': self.message
+            }
+        else:
+            return {
+                'OSN': self.osn,
+                'FILE_COUNT': self.file_count,
+                'STATUS': self.status
+            }
+
 
     def __str__(self):
         if self.message:

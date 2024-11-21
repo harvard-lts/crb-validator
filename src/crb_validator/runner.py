@@ -8,7 +8,7 @@ from ocfl_rehydration.drs_descriptor import DrsDescriptor
 from ocfl_rehydration.ocfl_inventory import OcflInventory
 
 from crb_validator.validation_entry import ValidationEntry
-from crb_validator.validation_report import ValidationReport
+from crb_validator.csv_report import CSVReport
 
 class Runner:
 
@@ -22,7 +22,7 @@ class Runner:
                          f"and hydrated_dir: {hydrated_dir}")
 
         # Create a validation report
-        report = ValidationReport(report_dir)
+        report = CSVReport(report_dir)
         try:
             start_time = time.time()
             self._do_run(download_dir,
@@ -34,11 +34,11 @@ class Runner:
             self.logger.error(msg)
             entry = ValidationEntry("n/a")
             entry.set_status("FAILURE", msg)
-            report.add_entry(entry)
+            report.add_entry(entry.to_dict())
 
         finally:
             end_time = time.time()
-            report.generate_csv()
+            report.generate_csv(ValidationEntry.column_header())
             self.logger.info(f"Report CSV: {report.file_path}")
             self.logger.debug(f"Summary of directory: {verified_dir}")
             self.logger.info(self.rate_utils.get_summary(verified_dir,
@@ -59,7 +59,7 @@ class Runner:
         for obj in hydrated_obj_dirs:
             self.logger.info(f"Verifying object: {obj}")
             result = self._verify_objs(download_dir, hydrated_dir, obj)
-            report.add_entry(result)
+            report.add_entry(result.to_dict())
 
             # Move the hydrated object to the verified directory, if successful
             if result.status == "SUCCESS":
