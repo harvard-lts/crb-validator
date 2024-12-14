@@ -18,18 +18,21 @@ class Reconciler():
         input_inventory = self._load_csv(inventory_csv)
 
         # For each object in the report, check if it is in the inventory
-        results = self._reconcile(input_report, input_inventory)
+        results = self._reconcile(report_csv, input_report, input_inventory)
 
         # Write the reconciled report to the same directory as the input inventory,
         #  in the format: reconciled_inventory_<timestamp>.csv
         self._write_csv(results, output_dir)
         self.logger.info("Reconciliation complete: {}")
 
-    def _reconcile(self, input_report, input_inventory):
+    def _reconcile(self, report_csv, input_report, input_inventory):
         for entry in input_report:
             if entry['OSN'] in [obj['OSN'] for obj in input_inventory]:
                 # If it is, compare the file-counts
                 inventory_entry = next(obj for obj in input_inventory if obj['OSN'] == entry['OSN'])
+
+                # Identify the source report in the inventory
+                inventory_entry['REPORT'] = report_csv
                 if entry['FILE_COUNT'] == inventory_entry['FILE_COUNT']:
                     # If they match, set the object's verified value as 'true'
                     inventory_entry['VERIFIED'] = 'true'
@@ -42,6 +45,7 @@ class Reconciler():
                 self.logger.error(f"Object {entry['OSN']} not found in inventory")
                 new_entry = {}
                 new_entry['OSN'] = entry['OSN']
+                new_entry['REPORT'] = report_csv
                 new_entry['VERIFIED'] = entry['FILE_COUNT']
                 input_inventory.append(new_entry)
 
@@ -60,7 +64,8 @@ class Reconciler():
                 'OSN',
                 'FILE_COUNT',
                 'FILE_BYTES',
-                'VERIFIED']
+                'VERIFIED',
+                'REPORT']
 
     def _load_csv(self, csv_file):
         self.logger.debug(f"Loading report: {csv_file}")
