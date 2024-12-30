@@ -1,11 +1,11 @@
 # For all of the 'download' objects, are they also in the inventory.csv?
 # Run: <script.sh> | grep -v ": 1"
-BASE="/Volumes/crb3/output/"
-for x in `ls $BASE|grep zzz`; do
+BASE="/Volumes/crb2/sinica/output/"
+for x in `ls $BASE|grep -v delete | grep -v reconcile-reports`; do
   echo "$x"
   for y in `ls $BASE/$x/download`; do
     echo -n "$y: "
-    grep -c $y $BASE/../input/nlc-inventory-uniq.csv
+    grep -wc $y $BASE/../input/sinica-inventory-uniq-all.csv
   done
 done
 

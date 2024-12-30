@@ -21,7 +21,7 @@ zzz.3115
 zzz.3707
 zzz.3822"
 
-BASE="/Volumes/crb3/output"
+BASE="/Volumes/crb2/nlc/output"
 #for x in `ls $BASE`; do
 for x in $LIST; do
   echo "$BASE/$x"

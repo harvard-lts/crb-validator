@@ -12,25 +12,21 @@ zzz.3115
 zzz.3707
 zzz.3822"
 
-BASE="/Volumes/crb3"
+BASE="/Volumes/crb2/sinica/output"
+REPORTS="${BASE}/reconcile-reports"
 
 i=0
-c=1
 pushd ..
-for x in $LIST; do
+#for x in $LIST; do
+for x in `ls $BASE | grep -v delete | grep -v reconcile-reports`; do
   echo $x ;
-  OBJ="$BASE/output/$x"
-
+  BATCH="$BASE/$x" ;
   if [ $i -eq "0" ]; then
     echo "first: $i"
-    python src/crb_validator/main.py reconcile -r $OBJ/report/*.csv -i $BASE/input/nlc-inventory-uniq.csv -o $BASE/output/reconcile-reports
-  elif [ $i -eq "1" ]; then
-    echo "next: $i"
-    python src/crb_validator/main.py reconcile -r $OBJ/report/*.csv -i $BASE/output/reconcile-reports/reconciled_inventory_2024-12-14.csv -o $BASE/output/reconcile-reports
+    python src/crb_validator/main.py reconcile -r $REPORTS/validation_report_${x}.csv -i $REPORTS/reconciled_inventory_2024-12-30.csv -o $REPORTS
   else
     echo "other: $i"
-    python src/crb_validator/main.py reconcile -r $OBJ/report/*.csv -i $BASE/output/reconcile-reports/reconciled_inventory_2024-12-14_${c}.csv -o $BASE/output/reconcile-reports
-    c=$((c+1))
+    python src/crb_validator/main.py reconcile -r $REPORTS/validation_report_${x}.csv -i $REPORTS/reconciled_inventory_2024-12-30_${i}.csv -o $REPORTS
   fi
 
   i=$((i+1))

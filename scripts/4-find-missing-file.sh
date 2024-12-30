@@ -8,13 +8,12 @@ fi
 
 OBJ=$1
 
-BASE="/Volumes/crb3/output/zzz.2714"
-#OBJ="007910302_v0001-METS_7970011074"
+BASE="/Volumes/crb3/output/zzz.2292"
 DOWNLOAD="$BASE/download"
 OBJ_DOWNLOAD="${DOWNLOAD}/${OBJ}"
 
-REHYDRATED="$BASE/rehydrated"
-OBJ_REHYDRATED="${REHYDRATED}/${OBJ}"
+TARGET="$BASE/verified"
+OBJ_TARGET="${TARGET}/${OBJ}"
 
 WORK="${PWD}/tmp-work"
 mkdir -p $WORK
@@ -25,7 +24,7 @@ rm ${WORK}/*
 ###
 # Find and compare jp2 images
 ###
-for x in `find $OBJ_REHYDRATED -name '*.jp2'`; do
+for x in `find $OBJ_TARGET -name '*.jp2'`; do
   md5 -q $x >> "${WORK}/rehydrated-md5.txt" 
 done
 
