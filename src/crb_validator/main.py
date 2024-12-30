@@ -1,3 +1,4 @@
+from crb_validator.checksum_extractor import ChecksumExtractor
 from reconciler import Reconciler
 from runner import Runner
 import argparse
@@ -9,6 +10,10 @@ def verify_download(args):
 def reconcile_reports(args):
     reconciler = Reconciler()
     reconciler.reconcile_reports(args.report, args.inventory, args.output_dir)
+
+def extract_checksums(args):
+    checksum_extractor = ChecksumExtractor(args.batch_checksum_dir, args.report_dir)
+    checksum_extractor.extract()
 
 ###
 ## Main ##
@@ -58,6 +63,17 @@ if __name__ == "__main__":
                   required=True,
                   help='Path to the directory to which the reconciled report will be written')
     reconcile_parser.set_defaults(func=reconcile_reports)
+
+    # Create the parser for the "checksums" command
+    checksums_parser = subparsers.add_parser('checksums', help='Generate checksum files.',
+                  description='Generate checksum files for the objects in the provided directory.')
+    checksums_parser.add_argument('-c', '--batch_checksum_dir',
+                  required=True,
+                  help='Path to the directory of object directories to which checksums will be written')
+    checksums_parser.add_argument('-r', '--report_dir',
+                  required=True,
+                  help='Path to the directory to which the report will be written')
+    checksums_parser.set_defaults(func=extract_checksums)
 
     args = ap.parse_args()
     args.func(args)
