@@ -1,4 +1,5 @@
 from crb_validator.checksum_extractor import ChecksumExtractor
+from crb_validator.checksum_verifier import ChecksumVerifier
 from reconciler import Reconciler
 from runner import Runner
 import argparse
@@ -14,6 +15,13 @@ def reconcile_reports(args):
 def extract_checksums(args):
     checksum_extractor = ChecksumExtractor(args.batch_checksum_dir, args.report_dir)
     checksum_extractor.extract()
+
+def final_verification(args):
+    checksum_verifier = ChecksumVerifier(args.batch_dir,
+                                         args.batch_checksum_dir,
+                                         args.inventory,
+                                         args.report_dir)
+    checksum_verifier.verify(args.expedite)
 
 ###
 ## Main ##
@@ -74,6 +82,27 @@ if __name__ == "__main__":
                   required=True,
                   help='Path to the directory to which the report will be written')
     checksums_parser.set_defaults(func=extract_checksums)
+
+    # Create the parser for the "final" verification command
+    final_parser = subparsers.add_parser('final', help='Final comparison of files and checksums.')
+    final_parser.add_argument('-b', '--batch_dir',
+                  required=True,
+                  help='Path to the directory of object directories that contains image files to be verfied')
+    final_parser.add_argument('-c', '--batch_checksum_dir',
+                  required=True,
+                  help='Path to the directory of object directories to which checksums will be written')
+    final_parser.add_argument('-i', '--inventory',
+                  required=True,
+                  help='Path to the inventory CSV file')
+    final_parser.add_argument('-r', '--report_dir',
+                  required=True,
+                  help='Path to the directory to which the report will be written')
+    final_parser.add_argument('-x', '--expedite',
+                  required=False,
+                  default=False,
+                  action='store_true',
+                  help='Only perform file count comparision. Skip checksum calculations.')
+    final_parser.set_defaults(func=final_verification)
 
     args = ap.parse_args()
     args.func(args)
